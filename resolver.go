@@ -105,6 +105,9 @@ func ogToJSON(og *opengraph.OpenGraph) string {
 
 func ogHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("New request for '%v'", r.RequestURI)
+	if r.Method == http.MethodOptions {
+		return
+	}
 	targetPath, err := getTargetFromRequest(r)
 	if err != nil {
 		log.Error("targetPath is not defined in incomming request")
@@ -122,13 +125,19 @@ func ogHandler(w http.ResponseWriter, r *http.Request) {
 		log.Debug("Error on processing html")
 	}
 	// add header
-	w.Header().Set("Access-Control-Allow-Origin", os.Getenv("ALLOW_ORIGIN"))
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(w, ogToJSON(og))
+}
+
+func ogHandlerWithCors(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", os.Getenv("ALLOW_ORIGIN"))
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	ogHandler(w, r)
 }
 
 func main() {
 	log.SetLevel(log.DebugLevel)
-	http.HandleFunc("/fetchUrl", ogHandler)
+	http.HandleFunc("/fetchUrl", ogHandlerWithCors)
 	host := os.Getenv("HOST")
 	port := os.Getenv("PORT")
 	log.Infof("starting of server on host:%v port:%v", host, port)
