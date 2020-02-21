@@ -23,8 +23,8 @@ http http://localhost:9000/fetchUrl\?url\=https://medium.com/devschacht/devschac
 ```
 ## Run in docker
 ```bash
-docker pull vladimirzhid/editor-js-link-resolver
-docker run -p 9000:9000 -e PORT=9000 -e HOST=0.0.0.0 -e ALLOW_ORIGIN='*' vladimirzhid/editor-js-link-resolver
+docker pull vlzhvlzh/editor-js-link-resolver
+docker run -p 9000:9000 -e PORT=9000 -e HOST=0.0.0.0 -e ALLOW_ORIGIN='*' vlzhvlzh/editor-js-link-resolver
 ```
 ### Env variables
 - PORT

@@ -16,23 +16,52 @@ import (
 )
 
 var client *http.Client
+var config *Config
 
-type editorJsLinkImage struct {
+// Config is
+type Config struct {
+	Port        string
+	Host        string
+	AllowOrigin string
+}
+
+// EditorJsLinkImage is
+type EditorJsLinkImage struct {
 	URL string `json:"url"`
 }
 
-type editorJsLinkMeta struct {
+// EditorJsLinkMeta is
+type EditorJsLinkMeta struct {
 	Title       string            `json:"title"`
 	Description string            `json:"description"`
-	Image       editorJsLinkImage `json:"image"`
+	Image       EditorJsLinkImage `json:"image"`
 }
 
-type editorJsLinkInfo struct {
+// EditorJsLinkMeta is
+type EditorJsLinkInfo struct {
 	Success int              `json:"success"`
-	Meta    editorJsLinkMeta `json:"meta"`
+	Meta    EditorJsLinkMeta `json:"meta"`
+}
+
+// EditorJsLinkMeta is
+type ErrorMessage struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 const urlRegex = `(http|ftp|https)://([\w+?\.\w+])+([a-zA-Z0-9\~\!\@\#\$\%\^\&\*\(\)_\-\=\+\\\/\?\.\:\;\'\,]*)?`
+
+func getConfig() *Config {
+	if config != nil {
+		return config
+	}
+	config = &Config{
+		Host:        os.Getenv("HOST"),
+		Port:        os.Getenv("PORT"),
+		AllowOrigin: os.Getenv("ALLOW_ORIGIN"),
+	}
+	return config
+}
 
 func newClient() *http.Client {
 	if client != nil {
@@ -86,12 +115,12 @@ func getImageURL(og *opengraph.OpenGraph) string {
 }
 
 func ogToJSON(og *opengraph.OpenGraph) string {
-	info := editorJsLinkInfo{
+	info := EditorJsLinkInfo{
 		Success: 1,
-		Meta: editorJsLinkMeta{
+		Meta: EditorJsLinkMeta{
 			Title:       og.Title,
 			Description: og.Description,
-			Image: editorJsLinkImage{
+			Image: EditorJsLinkImage{
 				URL: getImageURL(og),
 			},
 		},
@@ -130,7 +159,8 @@ func ogHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ogHandlerWithCors(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", os.Getenv("ALLOW_ORIGIN"))
+	config := getConfig()
+	w.Header().Set("Access-Control-Allow-Origin", config.AllowOrigin)
 	w.Header().Set("Access-Control-Allow-Headers", "*")
 	ogHandler(w, r)
 }
@@ -138,11 +168,10 @@ func ogHandlerWithCors(w http.ResponseWriter, r *http.Request) {
 func main() {
 	log.SetLevel(log.DebugLevel)
 	http.HandleFunc("/fetchUrl", ogHandlerWithCors)
-	host := os.Getenv("HOST")
-	port := os.Getenv("PORT")
-	log.Infof("starting of server on host:%v port:%v", host, port)
+	config := getConfig()
+	log.Infof("starting of server on host:%v port:%v", config.Host, config.Port)
 	log.Fatal(http.ListenAndServe(
-		fmt.Sprintf("%v:%v", host, port),
+		fmt.Sprintf("%v:%v", config.Host, config.Port),
 		nil,
 	))
 }
